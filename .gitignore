@@ -8,3 +8,4 @@ logs/
 __pycache__/
 .idea/
 final_application/weights/
+venv/

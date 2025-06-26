@@ -17,10 +17,15 @@ from models.LBAMModel import LBAMModel
 def is_image(file_name: Union[str, Path]) -> bool:
     if not isinstance(file_name, Path):
         file_name = Path(file_name)
-    return file_name.suffix.lower() in ['.png', '.jpeg', '.jpg', '.svg']
+    return file_name.suffix.lower() in [".png", ".jpeg", ".jpg", ".svg"]
 
 
-def inpaint_patch(segmentation: Image, ground_truth: torch.Tensor, image_mean: bool, inpainting_model: nn.Module) -> torch.Tensor:
+def inpaint_patch(
+    segmentation: Image,
+    ground_truth: torch.Tensor,
+    image_mean: bool,
+    inpainting_model: nn.Module,
+) -> torch.Tensor:
     # A kernel size of 7 is big enough to cover most handwriting.
     # A padding of 3 makes sure that the image size is not different.
     max_pooling = nn.MaxPool2d(kernel_size=7, stride=1, padding=3)
@@ -59,32 +64,37 @@ def inpaint_patch(segmentation: Image, ground_truth: torch.Tensor, image_mean: b
 
 
 def main(args: argparse.Namespace):
-    config_file = Path('application_config.yaml')
+    config_file = Path("application_config.yaml")
     with config_file.open() as f:
         model_config = yaml.safe_load(f)
 
-    hyperparam_config = {'patch_overlap': model_config['patch_overlap'],
-                         'min_confidence': model_config['min_confidence'],
-                         'min_contour_area': model_config['min_contour_area']}
+    hyperparam_config = {
+        "patch_overlap": model_config["patch_overlap"],
+        "min_confidence": model_config["min_confidence"],
+        "min_contour_area": model_config["min_contour_area"],
+    }
 
     segmenter = InpaintingAnalysisSegmenter(
         model_config["checkpoint"],
         device="cuda",
         class_to_color_map=Path(
-            '/workspace/final_application/synthesis_in_style_lightning/stylegan_code_finder/handwriting_colors.json'),
+            "./final_application/synthesis_in_style_lightning/stylegan_code_finder/handwriting_colors.json"
+        ),
         original_config_path=Path(model_config["config_path"]),
         max_image_size=int(model_config.get("max_image_size", 0)),
         print_progress=False,
-        show_confidence_in_segmentation=False
+        show_confidence_in_segmentation=False,
     )
     net_g = LBAMModel(4, 3)
-    net_g.load_state_dict(torch.load('weights/inpainting.pth'))
+    net_g.load_state_dict(torch.load("weights/inpainting.pth"))
 
     image_paths = [f for f in args.input_dir.rglob("*") if is_image(f)]
     assert len(image_paths) > 0, "There are no images in the given directory."
     segmenter.set_hyperparams(hyperparam_config)
 
-    for i, image_path in enumerate(tqdm(image_paths, desc="Segmenting and inpainting images...", leave=False)):
+    for i, image_path in enumerate(
+        tqdm(image_paths, desc="Segmenting and inpainting images...", leave=False)
+    ):
         original_image = Image.open(image_path)
         image = original_image.convert("L")
         predicted_patches = segmenter.segment_image(image)
@@ -92,26 +102,43 @@ def main(args: argparse.Namespace):
         original_batches = segmenter.crop_and_batch_patches(original_image, False)
         original_patches = []
         for original_batch in original_batches:
-            for original_patch in original_batch['images']:
+            for original_patch in original_batch["images"]:
                 original_patches.append(original_patch)
-        for patch_counter, (patch, original_patch) in enumerate(zip(predicted_patches, original_patches)):
-            color_prediction = segmenter.prediction_to_color_image(patch['prediction'])
-            patch['ground_truth'] = original_patch
-            inpainted_image, mask = inpaint_patch(color_prediction, patch['ground_truth'], args.image_mean_method, net_g)
-            mask_patches[patch_counter]['prediction'] = mask
-            predicted_patches[patch_counter]['prediction'] = inpainted_image
+        for patch_counter, (patch, original_patch) in enumerate(
+            zip(predicted_patches, original_patches)
+        ):
+            color_prediction = segmenter.prediction_to_color_image(patch["prediction"])
+            patch["ground_truth"] = original_patch
+            inpainted_image, mask = inpaint_patch(
+                color_prediction, patch["ground_truth"], args.image_mean_method, net_g
+            )
+            mask_patches[patch_counter]["prediction"] = mask
+            predicted_patches[patch_counter]["prediction"] = inpainted_image
         assembled_image = segmenter.assemble_predictions(predicted_patches, image.size)
         assembled_mask = segmenter.assemble_predictions(mask_patches, image.size)
-        F.to_pil_image(assembled_image).save(args.output_dir/image_path.name)
-        F.to_pil_image(assembled_mask).save(args.output_dir/f'{image_path.name}_mask.jpg')
+        F.to_pil_image(assembled_image).save(args.output_dir / image_path.name)
+        F.to_pil_image(assembled_mask).save(
+            args.output_dir / f"{image_path.name}_mask.jpg"
+        )
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Removes handwriting from documents.')
-    parser.add_argument('--input-dir', type=Path,
-                        help='the directory of the images you want to remove the handwriting from')
-    parser.add_argument('--output-dir', type=Path, help='the directory of the images without handwriting')
-    parser.add_argument('--image-mean-method', type=bool, default=False,
-                        help='If the image mean method should be used instead of LBAM')
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Removes handwriting from documents.")
+    parser.add_argument(
+        "--input-dir",
+        type=Path,
+        help="the directory of the images you want to remove the handwriting from",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        help="the directory of the images without handwriting",
+    )
+    parser.add_argument(
+        "--image-mean-method",
+        type=bool,
+        default=False,
+        help="If the image mean method should be used instead of LBAM",
+    )
     args = parser.parse_args()
     main(args=args)

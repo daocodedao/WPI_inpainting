@@ -4,6 +4,21 @@
 利用 [LBAM 图像修复模型](https://github.com/Vious/LBAM_Pytorch)，移除由 [Synthesis in Style](https://github.com/hendraet/synthesis-in-style) 检测到的手写笔迹。
 
 ## 环境设置
+## 环境 
+```
+python3.10 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt 
+```
+
+## 模型
+[这里](https://drive.google.com/file/d/1O_bImshs5KXloh2Nd05TzmiQIqIlJw0i/view?usp=sharing) 和 [这里](https://drive.google.com/file/d/19daBLbYazgU6q2EaEdHudJqrkWSWYlqf/view?usp=sharing) 下载。
+
+```
+scp -r  -P 10067 ./isnet.pth fxbox@frp.fxait.com:/data/work/DISHRemove/ 
+scp -r  -P 10067 ./isnet5.pth fxbox@frp.fxait.com:/data/work/DISHRemove/ 
+```
+
 
 确保你在 ```/final_application/synthesis_in_style_lightning``` 目录下有 Synthesis in Style Lightning 的文件，
 然后再通过 Git 子模块在本地安装。这些文件可以从 [这里](https://github.com/adbu42/synthesis-in-style-lightning/tree/training_loop_to_lighning) 复制。

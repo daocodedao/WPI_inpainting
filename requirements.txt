@@ -10,7 +10,7 @@ pandas
 Pillow
 pytorch-fid
 pytorch-lightning
-pytorch-training
+# pytorch-training
 PyYAML
 scikit-image
 scikit-learn

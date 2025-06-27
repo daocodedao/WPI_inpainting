@@ -9,14 +9,14 @@
 python3.10 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt 
+pip install -r final_application/synthesis_in_style_lightning/stylegan_code_finder/requirements.txt 
 ```
 
 ## 模型
 [这里](https://drive.google.com/file/d/1O_bImshs5KXloh2Nd05TzmiQIqIlJw0i/view?usp=sharing) 和 [这里](https://drive.google.com/file/d/19daBLbYazgU6q2EaEdHudJqrkWSWYlqf/view?usp=sharing) 下载。
 
 ```
-scp -r  -P 10067 ./isnet.pth fxbox@frp.fxait.com:/data/work/DISHRemove/ 
-scp -r  -P 10067 ./isnet5.pth fxbox@frp.fxait.com:/data/work/DISHRemove/ 
+scp -r  -P 10067 ./weights fxbox@frp.fxait.com:/data/work/WPI_inpainting/  
 ```
 
 

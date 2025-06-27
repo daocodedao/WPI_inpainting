@@ -127,11 +127,13 @@ if __name__ == "__main__":
     parser.add_argument(
         "--input-dir",
         type=Path,
+        default="images/src",
         help="the directory of the images you want to remove the handwriting from",
     )
     parser.add_argument(
         "--output-dir",
         type=Path,
+        default="images/result",
         help="the directory of the images without handwriting",
     )
     parser.add_argument(
